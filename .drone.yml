@@ -60,7 +60,7 @@ pipeline:
       - source: develop_ssh_key
         target: ssh_key
     script:
-      - cd /var/www/html && drush updatedb -y && drush fra -y && drush cc all -y
+      - cd /var/www/html && drush updatedb -y && drush cc all -y
     when:
       branch: master
 
