@@ -1,0 +1,83 @@
+workspace:
+  base: /drupal
+  path: hellosanta/mynews
+
+clone:
+  git:
+    image: plugins/git
+    depath: 50
+    tags: true
+
+pipeline:
+  PHPTest:
+    image: phpunit/phpunit:6.5.3
+    commands:
+      - echo 'php Test Process'
+  
+  dev-backup-process:
+    image: appleboy/drone-ssh
+    host:
+      - 60.248.35.69
+    port: 2300
+    username: root
+    command_timeout: 600
+    secrets: 
+      - source: develop_ssh_key
+        target: ssh_key
+    script:
+      - rm -R /var/www/html/backupdb/last-backup
+      - cd /var/www/html/sites/default && tar zcvf files-"$(date +'%Y%m%d')".tar.gz files
+      - cd /var/www/html && mkdir -p backupdb/last-backup
+      - cd /var/www/html && drush sql-dump > backup-"$(date +'%Y%m%d')".sql
+      - mv /var/www/html/backup-"$(date +'%Y%m%d')".sql /var/www/html/backupdb/last-backup
+      - mv /var/www/html/sites/default/files-"$(date +'%Y%m%d')".tar.gz  /var/www/html/backupdb/last-backup
+    when:
+      branch: master
+
+  dev-Deploy:
+    image: appleboy/drone-ssh
+    host:
+      - 60.248.35.69
+    port: 22
+    username: hs
+    command_timeout: 120
+    secrets: 
+      - source: hs69_password
+        target: ssh_password
+    script:
+      - cd /home/hs/project/mynews && git pull origin master
+    when:
+      branch: master
+  
+  dev-update:
+    image: appleboy/drone-ssh
+    host:
+      - 60.248.35.69
+    port: 2300
+    username: root
+    command_timeout: 600
+    secrets: 
+      - source: develop_ssh_key
+        target: ssh_key
+    script:
+      - cd /var/www/html && drush updatedb -y && drush fra -y && drush cc all -y
+    when:
+      branch: master
+
+  line-notify:
+    image: appleboy/drone-line
+    secrets: [ line_channel_secret, line_channel_token ]
+    only_match_email: true
+    to: 
+      - U97f8373ca671be8af273539f3ed05508::victor.yang@hellosanta.com.tw
+      - U206359cdf720188860a70f0652dec6b5::a65162@gmail.com
+      - U654bfc2a4bc431d1f3712c026e65de7a::ching84968@gmail.com
+      - U972b6e1dc2cbfd6bed3ef483ba0c274c::midorin6497@gmail.com
+    message: >
+      {{#success build.status}}
+        build {{build.number}} 建立成功，做得好！！
+      {{else}}
+        build {{build.number}} 建立失敗，請修正～～
+      {{/success}}
+    when:
+      status: [changed, failure]
