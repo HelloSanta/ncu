@@ -1,58 +1,5 @@
 # ChangeLog
 
-* Make obtaining SMTP transaction ID more reliable
-
-## Version 5.2.24 (July 26th 2017)
-* **SECURITY** Fix XSS vulnerability in one of the code examples, [CVE-2017-11503](https://web.nvd.nist.gov/view/vuln/detail?vulnId=CVE-2017-11503). The `code_generator.phps` example did not filter user input prior to output. This file is distributed with a `.phps` extension, so it it not normally executable unless it is explicitly renamed, so it is safe by default. There was also an undisclosed potential XSS vulnerability in the default exception handler (unused by default). Patches for both issues kindly provided by Patrick Monnerat of the Fedora Project.
-* Handle bare codes (an RFC contravention) in SMTP server responses
-* Make message timestamps more dynamic - calculate the date separately for each message
-* Include timestamps in HTML-format debug output
-* Improve Turkish, Norwegian, Serbian, Brazilian Portuguese & simplified Chinese translations
-* Correction of Serbian ISO language code from `sr` to `rs`
-* Fix matching of multiple entries in `Host` to match IPv6 literals without breaking port selection (see #1094, caused by a3b4f6b)
-* Better capture and reporting of SMTP connection errors
-
-## Version 5.2.23 (March 15th 2017)
-* Improve trapping of TLS errors during connection so that they don't cause warnings, and are reported better in debug output
-* Amend test suite so it uses PHPUnit version 4.8, compatible with older versions of PHP, instead of the version supplied by Travis-CI
-* This forces pinning of some dev packages to older releases, but should make travis builds more reliable
-* Test suite now runs on HHVM, and thus so should PHPMailer in general
-* Improve Czech translations
-* Add links to CVE-2017-5223 resources
-
-## Version 5.2.22 (January 5th 2017)
-* **SECURITY** Fix [CVE-2017-5223](https://web.nvd.nist.gov/view/vuln/detail?vulnId=CVE-2017-5223), local file disclosure vulnerability if content passed to `msgHTML()` is sourced from unfiltered user input. Reported by Yongxiang Li of Asiasecurity. The fix for this means that calls to `msgHTML()` without a `$basedir` will not import images with relative URLs, and relative URLs containing `..` will be ignored.
-* Add simple contact form example
-* Emoji in test content
-
-## Version 5.2.21 (December 28th 2016)
-* Fix missed number update in version file - no functional changes
-
-## Version 5.2.20 (December 28th 2016)
-* **SECURITY** Critical security update for CVE-2016-10045 please update now! Thanks to [Dawid Golunski](https://legalhackers.com) and Paul Buonopane (@Zenexer).
-* Note that this change will break VERP addresses in Sender if you're using mail() - workaround: use SMTP to localhost instead.
-
-## Version 5.2.19 (December 26th 2016)
-* Minor cleanup
-
-## Version 5.2.18 (December 24th 2016)
-* **SECURITY** Critical security update for CVE-2016-10033 please update now! Thanks to [Dawid Golunski](https://legalhackers.com).
-* Add ability to extract the SMTP transaction ID from some common SMTP success messages
-* Minor documentation tweaks
-
-## Version 5.2.17 (December 9th 2016)
-* This is officially the last feature release of 5.2. Security fixes only from now on; use PHPMailer 6.0!
-* Allow DKIM private key to be provided as a string
-* Provide mechanism to allow overriding of boundary and message ID creation
-* Improve Brazilian Portuguese, Spanish, Swedish, Romanian, and German translations
-* PHP 7.1 support for Travis-CI
-* Fix some language codes
-* Add security notices
-* Improve DKIM compatibility in older PHP versions
-* Improve trapping and capture of SMTP connection errors
-* Improve passthrough of error levels for debug output
-* PHPDoc cleanup
-
 ## Version 5.2.16 (June 6th 2016)
 * Added DKIM example
 * Fixed empty additional_parameters problem

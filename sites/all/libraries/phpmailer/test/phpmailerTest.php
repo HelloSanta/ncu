@@ -103,9 +103,9 @@ class PHPMailerTest extends PHPUnit_Framework_TestCase
         $this->Mail->addReplyTo('no_reply@phpmailer.example.com', 'Reply Guy');
         $this->Mail->Sender = 'unit_test@phpmailer.example.com';
         if (strlen($this->Mail->Host) > 0) {
-            $this->Mail->isSMTP();
+            $this->Mail->Mailer = 'smtp';
         } else {
-            $this->Mail->isMail();
+            $this->Mail->Mailer = 'mail';
         }
         if (array_key_exists('mail_to', $_REQUEST)) {
             $this->setAddress($_REQUEST['mail_to'], 'Test User', 'to');
@@ -1010,35 +1010,6 @@ EOT;
         $this->assertNotEmpty($this->Mail->AltBody, 'Custom AltBody not set by msgHTML');
 
         $this->assertTrue($this->Mail->send(), $this->Mail->ErrorInfo);
-
-        //Test that local paths without a basedir are ignored
-        $this->Mail->msgHTML('<img src="/etc/hostname">test');
-        $this->assertTrue(strpos($this->Mail->Body, 'src="/etc/hostname"') !== false);
-        //Test that local paths with a basedir are not ignored
-        $this->Mail->msgHTML('<img src="composer.json">test', realpath(self::INCLUDE_DIR));
-        $this->assertTrue(strpos($this->Mail->Body, 'src="composer.json"') === false);
-        //Test that local paths with parent traversal are ignored
-        $this->Mail->msgHTML('<img src="../composer.json">test', realpath(self::INCLUDE_DIR));
-        $this->assertTrue(strpos($this->Mail->Body, 'src="composer.json"') === false);
-        //Test that existing embedded URLs are ignored
-        $this->Mail->msgHTML('<img src="cid:5d41402abc4b2a76b9719d911017c592">test');
-        $this->assertTrue(
-            strpos($this->Mail->Body, 'src="cid:5d41402abc4b2a76b9719d911017c592"') !== false
-        );
-        //Test that absolute URLs are ignored
-        $this->Mail->msgHTML('<img src="https://github.com/PHPMailer/PHPMailer/blob/master/composer.json">test');
-        $this->assertTrue(
-            strpos($this->Mail->Body, 'src="https://github.com/PHPMailer/PHPMailer/blob/master/composer.json"') !== false
-        );
-        //Test that absolute URLs with anonymous/relative protocol are ignored
-        //Note that such URLs will not work in email anyway because they have no protocol to be relative to
-        $this->Mail->msgHTML('<img src="//github.com/PHPMailer/PHPMailer/blob/master/composer.json">test');
-        $this->assertTrue(
-            strpos(
-                $this->Mail->Body,
-                'src="//github.com/PHPMailer/PHPMailer/blob/master/composer.json"'
-            ) !== false
-        );
     }
 
     /**
@@ -1049,21 +1020,14 @@ EOT;
         $this->Mail->Body = 'This is the <strong>HTML</strong> part of the email.';
         $this->Mail->Subject .= ': HTML + Attachment';
         $this->Mail->isHTML(true);
-        $this->Mail->CharSet = 'UTF-8';
 
         if (!$this->Mail->addAttachment(
-            realpath(self::INCLUDE_DIR . 'examples/images/phpmailer_mini.png'),
-            'phpmailer_mini.png'
-        )) {
+            realpath(self::INCLUDE_DIR . 'examples/images/phpmailer_mini.png'), 'phpmailer_mini.png')
+        ) {
             $this->assertTrue(false, $this->Mail->ErrorInfo);
             return;
         }
 
-        $this->Mail->addAttachment(
-            realpath(self::INCLUDE_DIR . 'examples/images/phpmailer_mini.png'),
-            'žasiukas.png'
-        );
-        $this->Mail->addStringAttachment('123', 'žasiukas.txt');
         //Make sure that trying to attach a nonexistent file fails
         $this->assertFalse($this->Mail->addAttachment(__FILE__ . md5(microtime()), 'nonexistent_file.txt'));
 
@@ -1300,12 +1264,12 @@ EOT;
         //Only run if we have qmail installed
         if (file_exists('/var/qmail/bin/qmail-inject')) {
             $this->Mail->Body = 'Sending via qmail';
-            $this->buildBody();
+            $this->BuildBody();
             $subject = $this->Mail->Subject;
 
             $this->Mail->Subject = $subject . ': qmail';
-            $this->Mail->isQmail();
-            $this->assertTrue($this->Mail->send(), $this->Mail->ErrorInfo);
+            $this->Mail->IsQmail();
+            $this->assertTrue($this->Mail->Send(), $this->Mail->ErrorInfo);
         } else {
             $this->markTestSkipped('Qmail is not installed');
         }
@@ -1794,8 +1758,7 @@ EOT;
         //Create a certificate signing request
         $csr = openssl_csr_new($certprops, $pk);
         //Create a self-signed cert
-        $cacert = file_get_contents($cacertfile);
-        $cert = openssl_csr_sign($csr, $cacert, $capk, 1);
+        $cert = openssl_csr_sign($csr, 'file://' . $cacertfile, $capk, 1);
         //Save the cert
         openssl_x509_export($cert, $certout);
         file_put_contents($certfile, $certout);
@@ -2158,15 +2121,11 @@ EOT;
         $this->Mail->SMTPDebug = 4; //Show connection-level errors
         $this->assertTrue($this->Mail->smtpConnect(), 'SMTP single connect failed');
         $this->Mail->smtpClose();
+        $this->Mail->Host = "ssl://localhost:12345;tls://localhost:587;10.10.10.10:54321;localhost:12345;10.10.10.10";
+        $this->assertFalse($this->Mail->smtpConnect(), 'SMTP bad multi-connect succeeded');
+        $this->Mail->smtpClose();
         $this->Mail->Host = "localhost:12345;10.10.10.10:54321;" . $_REQUEST['mail_host'];
         $this->assertTrue($this->Mail->smtpConnect(), 'SMTP multi-connect failed');
-        $this->Mail->smtpClose();
-        $this->Mail->Host = "[::1]:" . $this->Mail->Port . ';' . $_REQUEST['mail_host'];
-        $this->assertTrue($this->Mail->smtpConnect(), 'SMTP IPv6 literal multi-connect failed');
-        $this->Mail->smtpClose();
-        //All these hosts are expected to fail
-        $this->Mail->Host = "xyz://bogus:25;tls://[bogus]:25;ssl://localhost:12345;tls://localhost:587;10.10.10.10:54321;localhost:12345;10.10.10.10";
-        $this->assertFalse($this->Mail->smtpConnect(), 'SMTP bad multi-connect succeeded');
         $this->Mail->smtpClose();
         $this->Mail->Host = " localhost:12345 ; " . $_REQUEST['mail_host'] . ' ';
         $this->assertTrue($this->Mail->smtpConnect(), 'SMTP hosts with stray spaces failed');
