@@ -12,3 +12,12 @@ function hs_base_install() {
 function hs_base_update_7001() {
   module_enable(array('libraries','phpmailer'),true);
 }
+
+/**
+ * 
+ * 更新內容 【安裝ckeditor】
+ * 
+ * */
+function hs_base_update_7002() {
+  module_enable(array('ckeditor'),true);
+}
