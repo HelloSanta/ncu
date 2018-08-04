@@ -1,0 +1,14 @@
+<?php
+
+function hs_base_install() {
+  // module_enable(array('hs_wei','hs_may','hs_jimmy8646'),true);
+}
+
+/**
+ * 
+ * 更新內容 【安裝一些基本模組+設定Theme】
+ * 
+ * */
+function hs_base_update_7001() {
+  module_enable(array('libraries','phpmailer'),true);
+}
