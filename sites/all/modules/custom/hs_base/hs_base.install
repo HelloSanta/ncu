@@ -30,3 +30,21 @@ function hs_base_update_7002() {
 function hs_base_update_7003() {
   module_enable(array('drupalchat'),true);
 }
+
+/**
+ * 
+ * 更新內容 module_filter
+ * 
+ * */
+function hs_base_update_7004() {
+  module_enable(array('module_filter'),true);
+}
+
+/**
+ * 
+ * 更新內容 views, views_ui
+ * 
+ * */
+function hs_base_update_7005() {
+  module_enable(array('views','views_ui'),true);
+}
